@@ -1,6 +1,13 @@
-const { ArgumentMatches, ArgumentTypes } = require('../../../util/Constants');
+const {
+    ArgumentMatches,
+    ArgumentTypes
+} = require('../../../util/Constants');
 const Flag = require('../Flag');
-const { choice, intoCallable, isPromise } = require('../../../util/Util');
+const {
+    choice,
+    intoCallable,
+    isPromise
+} = require('../../../util/Util');
 
 /**
  * Represents an argument for a command.
@@ -138,20 +145,26 @@ class Argument {
                 handlerDefs.modifyOtherwise
             );
 
-            let text = await intoCallable(otherwise).call(this, message, { phrase, failure });
+            let text = await intoCallable(otherwise).call(this, message, {
+                phrase,
+                failure
+            });
             if (Array.isArray(text)) {
                 text = text.join('\n');
             }
 
             if (modifyOtherwise) {
-                text = await modifyOtherwise.call(this, message, text, { phrase, failure });
+                text = await modifyOtherwise.call(this, message, text, {
+                    phrase,
+                    failure
+                });
                 if (Array.isArray(text)) {
                     text = text.join('\n');
                 }
             }
 
             if (text) {
-                const sent = await message.channel.send(text);
+                const sent = await this.client.sendMessage(message, text);
                 if (message.util) message.util.addMessage(sent);
             }
 
@@ -163,7 +176,10 @@ class Argument {
                 return doOtherwise(null);
             }
 
-            return intoCallable(this.default)(message, { phrase, failure: null });
+            return intoCallable(this.default)(message, {
+                phrase,
+                failure: null
+            });
         }
 
         const res = await this.cast(message, phrase);
@@ -176,9 +192,12 @@ class Argument {
                 return this.collect(message, phrase, res);
             }
 
-            return this.default == null
-                ? res
-                : intoCallable(this.default)(message, { phrase, failure: res });
+            return this.default == null ?
+                res :
+                intoCallable(this.default)(message, {
+                    phrase,
+                    failure: res
+                });
         }
 
         return res;
@@ -230,7 +249,7 @@ class Argument {
                 timeout: promptOptions.modifyTimeout,
                 ended: promptOptions.modifyEnded,
                 cancel: promptOptions.modifyCancel
-            }[promptType];
+            } [promptType];
 
             if (modifier) {
                 text = await modifier.call(this, message, text, {
@@ -259,7 +278,7 @@ class Argument {
                 const startText = await getText(promptType, prompter, retryCount, prevMessage, prevInput, prevParsed);
 
                 if (startText) {
-                    sentStart = await (message.util || message.channel).send(startText);
+                    sentStart = await this.client.sendMessage(message, startText);
                     if (message.util) {
                         message.util.setEditable(false);
                         message.util.setLastResponse(sentStart);
@@ -280,7 +299,7 @@ class Argument {
             } catch (err) {
                 const timeoutText = await getText('timeout', promptOptions.timeout, retryCount, prevMessage, prevInput, '');
                 if (timeoutText) {
-                    const sentTimeout = await message.channel.send(timeoutText);
+                    const sentTimeout = await this.client.sendMessage(message, timeoutText);
                     if (message.util) message.util.addMessage(sentTimeout);
                 }
 
@@ -295,7 +314,7 @@ class Argument {
             if (input.content.toLowerCase() === promptOptions.cancelWord.toLowerCase()) {
                 const cancelText = await getText('cancel', promptOptions.cancel, retryCount, input, input.content, 'cancel');
                 if (cancelText) {
-                    const sentCancel = await message.channel.send(cancelText);
+                    const sentCancel = await this.client.sendMessage(message, cancelText);
                     if (message.util) message.util.addMessage(sentCancel);
                 }
 
@@ -315,7 +334,7 @@ class Argument {
 
                 const endedText = await getText('ended', promptOptions.ended, retryCount, input, input.content, 'stop');
                 if (endedText) {
-                    const sentEnded = await message.channel.send(endedText);
+                    const sentEnded = await this.client.sendMessage(message, endedText);
                     if (message.util) message.util.addMessage(sentEnded);
                 }
 
@@ -386,7 +405,10 @@ class Argument {
                 }
             }
 
-            return { match, matches };
+            return {
+                match,
+                matches
+            };
         }
 
         if (resolver.type(type)) {
@@ -465,13 +487,13 @@ class Argument {
     static range(type, min, max, inclusive = false) {
         return Argument.validate(type, (msg, p, x) => {
             /* eslint-disable-next-line valid-typeof */
-            const o = typeof x === 'number' || typeof x === 'bigint'
-                ? x
-                : x.length != null
-                    ? x.length
-                    : x.size != null
-                        ? x.size
-                        : x;
+            const o = typeof x === 'number' || typeof x === 'bigint' ?
+                x :
+                x.length != null ?
+                x.length :
+                x.size != null ?
+                x.size :
+                x;
 
             return o >= min && (inclusive ? o <= max : o < max);
         });
@@ -525,10 +547,16 @@ class Argument {
             if (typeof type === 'function') type = type.bind(this);
             const res = await Argument.cast(type, this.handler.resolver, message, phrase);
             if (Argument.isFailure(res)) {
-                return Flag.fail({ input: phrase, value: res });
+                return Flag.fail({
+                    input: phrase,
+                    value: res
+                });
             }
 
-            return { input: phrase, value: res };
+            return {
+                input: phrase,
+                value: res
+            };
         };
     }
 
@@ -545,10 +573,16 @@ class Argument {
             if (typeof type === 'function') type = type.bind(this);
             const res = await Argument.cast(type, this.handler.resolver, message, phrase);
             if (Argument.isFailure(res)) {
-                return Flag.fail({ tag, value: res });
+                return Flag.fail({
+                    tag,
+                    value: res
+                });
             }
 
-            return { tag, value: res };
+            return {
+                tag,
+                value: res
+            };
         };
     }
 
@@ -565,10 +599,18 @@ class Argument {
             if (typeof type === 'function') type = type.bind(this);
             const res = await Argument.cast(type, this.handler.resolver, message, phrase);
             if (Argument.isFailure(res)) {
-                return Flag.fail({ tag, input: phrase, value: res });
+                return Flag.fail({
+                    tag,
+                    input: phrase,
+                    value: res
+                });
             }
 
-            return { tag, input: phrase, value: res };
+            return {
+                tag,
+                input: phrase,
+                value: res
+            };
         };
     }
 
